@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Attendance – Parivar Canteen</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<style>
+:root{--yellow:#ffe500;--blue:#bfe3f5;--off:#d00000;--grid:#8a8a8a}
+*{box-sizing:border-box}
+body{margin:0;font:13px/1.3 "Segoe UI",Roboto,Arial,sans-serif;color:#111;background:#f3f4f6}
+.bar{position:sticky;left:0;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:end;padding:10px 12px;background:#fff;border-bottom:1px solid #d4d4d8}
+.bar label{display:flex;flex-direction:column;font-size:11px;color:#52525b;gap:3px}
+.bar input,.bar select,.bar button{font:inherit;padding:8px 10px;border:1px solid #a1a1aa;border-radius:6px;background:#fff;min-height:38px}
+.bar input[type=date]{min-width:150px}
+.bar input[type=number]{width:78px}
+.bar input[type=color]{padding:2px;width:44px;min-height:38px}
+.bar button{cursor:pointer;background:#f4f4f5}
+.bar button.pri{background:#0f5c8c;color:#fff;border-color:#0f5c8c}
+.colors{display:flex;gap:8px;align-items:end}
+.wrap{overflow:auto;max-height:calc(100vh - 150px);background:#fff}
+table{border-collapse:separate;border-spacing:0;table-layout:fixed}
+th,td{border-right:1px solid var(--grid);border-bottom:1px solid var(--grid);padding:0;text-align:center}
+th.c0,td.c0{position:sticky;left:0;z-index:2;width:210px;min-width:210px;text-align:left;background:#fff;border-left:1px solid var(--grid)}
+thead th{position:sticky;background:var(--blue);z-index:3;height:26px;font-size:11px;border-top:1px solid var(--grid)}
+thead tr.hd1 th{top:0;font-weight:700}
+thead tr.hd2 th{top:27px;font-weight:400}
+thead th.c0{z-index:5;left:0}
+th.dt,th.dy,td.cell{width:66px;min-width:66px}
+tr.dep td{height:28px;font-weight:700}
+tr.dep.yellow td{background:var(--yellow)}
+tr.dep.blue td{background:var(--blue)}
+tr.dep td.c0{display:flex;align-items:center;gap:4px;border-top:0;height:28px}
+input.dn{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-weight:700;padding:4px 6px}
+td.st{display:table-cell}
+.who{display:flex;align-items:center;gap:2px;padding:0 2px}
+.who .nm{flex:1;min-width:0}
+input.sn,input.note{width:100%;border:0;background:transparent;font:inherit;padding:2px 4px}
+input.sn{font-weight:600;padding-bottom:0}
+input.note{font-size:10.5px;color:#52525b;padding-top:0}
+button.mini{border:0;background:rgba(0,0,0,.08);border-radius:4px;width:28px;height:28px;cursor:pointer;font-size:15px;line-height:1;flex:none}
+select.d{width:100%;height:36px;border:0;background:#fff;font:inherit;font-size:12px;text-align:center;text-align-last:center;-webkit-appearance:none;appearance:none;padding:0 2px;color:#111}
+select.d.abs{color:var(--off);font-weight:700}
+th.tot,td.tot{width:54px;min-width:54px;font-weight:600;background:#fafafa}
+thead th.tot{background:var(--blue)}
+td.tot.wk{background:var(--yellow);font-weight:700}
+.sum{display:none;padding:12px;background:#fff;overflow:auto}
+.sum.show{display:block}
+.sum table th,.sum table td{padding:6px 10px;border:1px solid var(--grid);white-space:nowrap}
+.sum th{background:var(--blue)}
+.idb{padding:8px 12px;background:var(--yellow);border:1px solid var(--grid);border-radius:6px;font-weight:700;min-height:38px;display:flex;align-items:center;white-space:nowrap}
+th.dt.sv::before{content:"\2713 ";color:#0a7a2f}
+.daily{display:none;padding:10px 12px;background:#fff;border-bottom:1px solid #d4d4d8}
+.daily.show{display:block}
+.drow{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:8px}
+.drow label{display:flex;flex-direction:column;font-size:11px;color:#52525b;gap:3px}
+.drow input,.drow button{font:inherit;padding:8px 10px;border:1px solid #a1a1aa;border-radius:6px;background:#fff;min-height:40px}
+.drow button.pri{background:#0f5c8c;color:#fff;border-color:#0f5c8c}
+#dStat{font-weight:600;padding:8px 0}
+#dStat.ok{color:#0a7a2f}#dStat.no{color:var(--off)}
+.dh{font-weight:700;padding:6px 8px;margin-top:6px;border:1px solid var(--grid)}
+.dh.yellow{background:var(--yellow)}.dh.blue{background:var(--blue)}
+.dr{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 8px;border:1px solid #e4e4e7;border-top:0}
+.dr small{display:block;color:#52525b;font-size:10.5px}
+.dr select{min-width:90px;height:40px;font:inherit;border:1px solid #a1a1aa;border-radius:6px;background:#fff}
+.dr select.abs{color:var(--off);font-weight:700}
+@media print{.daily{display:none!important}}
+.hint{padding:6px 12px;font-size:11px;color:#52525b}
+@media print{
+ @page{size:landscape;margin:8mm}
+ .bar,.hint,.sum,button.mini{display:none!important}
+ .wrap{max-height:none;overflow:visible}
+ select.d{height:auto}
+ .ptitle{display:block!important}
+}
+.ptitle{display:none;text-align:center;font-weight:700;font-size:15px;padding:4px}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <label>Attendance ID<div class="idb" id="attId"></div></label>
+  <label>Month<select id="mon"></select></label>
+  <label>Year<input type="number" id="yr" min="2020" max="2100" inputmode="numeric"></label>
+  <label>Saved IDs<select id="saved"></select></label>
+  <label>Start date<input type="date" id="start"></label>
+  <label>Days<input type="number" id="days" min="1" max="366" inputmode="numeric"></label>
+  <button id="prev" title="Move back by the number of days">Previous</button>
+  <button id="next" title="Move forward by the number of days">Next</button>
+  <label>Roster title<input type="text" id="title" style="min-width:180px"></label>
+  <button id="addDept">Add department</button>
+  <button id="addShift">Add shift code</button>
+  <button id="toggleSum">Monthly summary</button>
+  <button id="dailyBtn" class="pri">Daily attendance</button>
+  <button id="xlsx" class="pri">Export to Excel</button>
+  <button id="backup" title="Download all data as a backup file">Backup</button>
+  <button id="restore" title="Load data from a backup file">Restore</button>
+  <input type="file" id="restoreFile" accept=".json,application/json" style="display:none">
+  <button id="print">Print</button>
+  <div class="colors">
+    <label>Yellow<input type="color" id="cYellow"></label>
+    <label>Blue<input type="color" id="cBlue"></label>
+    <label>Absent text<input type="color" id="cOff"></label>
+    <label>Grid<input type="color" id="cGrid"></label>
+  </div>
+</div>
+<div class="daily" id="daily">
+  <div class="drow">
+    <label>Attendance date<input type="date" id="dDate"></label>
+    <button id="dAllP">Mark unmarked as Present</button>
+    <button id="dSave" class="pri">Save attendance</button>
+    <span id="dStat"></span>
+  </div>
+  <div id="dList"></div>
+</div>
+<div class="hint">Tap a cell to pick a shift. Changes save automatically on this device.</div>
+<div class="ptitle" id="ptitle"></div>
+<div class="wrap" id="wrap"></div>
+<div class="sum" id="sum"></div>
+
+<script>
+const KEY = "Dutyroasterid";
+const DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
+const CODES=["P","O","C","CL","SL","A"];
+const CODE_HELP={P:"Present",O:"Weekly Off",C:"Comp Off",CL:"Casual Leave",SL:"Sick Leave",A:"Absent"};
+function S(name, note){ return {name, note: note||"", duty:{}}; }
+function defaults(){
+  const t = new Date();
+  const start = t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-01";
+  return {
+    v:2, title:"Attendance – Parivar Canteen", start, days:31,
+    shifts:CODES.slice(),
+    colors:{yellow:"#ffe500",blue:"#bfe3f5",off:"#d00000",grid:"#8a8a8a"},
+    depts:[
+      {name:"Pantry",color:"yellow",staff:[S("Sudarshan Mandal"),S("Sai Teja"),S("Mallesh"),S("Akash"),S("Faizan (Reliever)")]},
+      {name:"Tandoor",color:"yellow",staff:[S("Mosin"),S("Tofiq"),S("Samsul Alam"),S("Nasrat Hassan")]},
+      {name:"South Indian",color:"blue",staff:[S("Vasudev","6:00 AM–16:00 Hrs"),S("Rakesh","10:00 AM–08:00 PM"),S("Pradeep","14:00 Hrs–00:00 AM"),S("Ranjan Malik","14:00–00:00 AM"),S("Suraj","8:00 AM–6:00 PM")]},
+      {name:"Metro Adda",color:"yellow",staff:[S("V Raju"),S("Loknath Shaw"),S("B Raju"),S("Vikas"),S("N Raju"),S("Mahoj (Reliever)")]},
+      {name:"Chinese",color:"yellow",staff:[S("Nausad Alam"),S("Soumen Das"),S("Mahmood Alam"),S("Bilal Ansari (Reliever)"),S("Laxman"),S("Rajesh")]},
+      {name:"Indian North",color:"blue",staff:[S("Shahid Ali"),S("Badal Kumar"),S("Faizan"),S("Mastoor Alam"),S("Shaqib Akthar (Reliever)"),S("Gaurav Kumar")]},
+      {name:"Mor (9:00 AM–9:00 PM)",color:"yellow",staff:[]},
+      {name:"Mor (9:00 AM–7:00 AM)",color:"yellow",staff:[]},
+      {name:"Rasa",color:"yellow",staff:[S("Ramesh Babu"),S("Arun Singh"),S("Virender Singh"),S("Suraj Singh"),S("Sandeep")]},
+      {name:"Metro Chai",color:"blue",staff:[S("Deepak"),S("Devender"),S("Salim"),S("Pavan")]}
+    ]
+  };
+}
+
+let st;
+try { st = JSON.parse(localStorage.getItem(KEY)); } catch(e){ st = null; }
+if(!st || !st.depts) st = defaults();
+if(!st.daily) st.daily={};
+if(st.title==="Staff Duty Roster"){ st.title="Attendance – Parivar Canteen"; }
+if(st.v!==2){ // migrate older saved rosters to the attendance codes
+  st.v=2; st.shifts=CODES.slice();
+  st.depts.forEach(d=>d.staff.forEach(p=>{ Object.keys(p.duty).forEach(k=>{ if(!CODES.includes(p.duty[k])) delete p.duty[k]; }); }));
+  try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){}
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){} }
+
+/* ---------- date helpers (UTC-safe) ---------- */
+const toD = s => new Date(s+"T00:00:00Z");
+const iso = d => d.toISOString().slice(0,10);
+const addDays = (s,n)=>{ const d=toD(s); d.setUTCDate(d.getUTCDate()+n); return iso(d); };
+const fmt = s => { const d=toD(s); return d.getUTCDate()+"/"+(d.getUTCMonth()+1)+"/"+d.getUTCFullYear(); };
+const wd = s => DAYS[toD(s).getUTCDay()];
+const esc = v => String(v==null?"":v).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+function dates(){ const a=[]; for(let i=0;i<st.days;i++) a.push(addDays(st.start,i)); return a; }
+
+/* ---------- attendance ID (one per month) ---------- */
+const MON=["January","February","March","April","May","June","July","August","September","October","November","December"];
+const attId = () => "PC-ATT-"+st.start.slice(0,4)+"-"+st.start.slice(5,7);
+function setMonth(y,m){
+  if(!y||!m) return;
+  st.start=y+"-"+String(m).padStart(2,"0")+"-01";
+  st.days=new Date(Date.UTC(y,m,0)).getUTCDate();
+  save(); render();
+}
+function renderSaved(){
+  const cnt={};
+  st.depts.forEach(d=>d.staff.forEach(p=>Object.keys(p.duty).forEach(k=>{ const ym=k.slice(0,7); cnt[ym]=(cnt[ym]||0)+1; })));
+  const cur=st.start.slice(0,7);
+  const keys=Object.keys(cnt).sort().reverse();
+  saved.innerHTML='<option value="">Open saved ID…</option>'+keys.map(ym=>`<option value="${ym}"${ym===cur?" selected":""}>PC-ATT-${ym} (${cnt[ym]} entries)</option>`).join("");
+}
+
+/* ---------- render ---------- */
+const TOTH = CODES.map(c=>`<th class="tot" title="${CODE_HELP[c]}">${c}</th>`).join("") + '<th class="tot" title="Days in period minus Absent">Days worked</th>';
+const TOTH2 = '<th class="tot"></th>'.repeat(CODES.length+1);
+function totCells(p, ds){
+  const c=counts(p,ds);
+  return CODES.map(k=>`<td class="tot" data-t="${k}">${c[k]}</td>`).join("") + `<td class="tot wk" data-t="W">${c.worked}</td>`;
+}
+function applyColors(){
+  const r=document.documentElement.style, c=st.colors;
+  r.setProperty("--yellow",c.yellow); r.setProperty("--blue",c.blue);
+  r.setProperty("--off",c.off); r.setProperty("--grid",c.grid);
+  cYellow.value=c.yellow; cBlue.value=c.blue; cOff.value=c.off; cGrid.value=c.grid;
+}
+function render(){
+  const ds = dates();
+  const opts = '<option value=""></option>' + st.shifts.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join("");
+  let h = '<table><thead><tr class="hd1"><th class="c0">Date</th>' + ds.map(d=>`<th class="dt${st.daily[d]?" sv":""}">${fmt(d)}</th>`).join("") +
+          TOTH + '</tr><tr class="hd2"><th class="c0">Day</th>' + ds.map(d=>`<th class="dy">${wd(d)}</th>`).join("") + TOTH2 + '</tr></thead><tbody>';
+  st.depts.forEach((dp,di)=>{
+    h += `<tr class="dep ${dp.color==="blue"?"blue":"yellow"}"><td class="c0"><input class="dn" data-k="dname" data-d="${di}" value="${esc(dp.name)}">
+      <button class="mini" data-act="color" data-d="${di}" title="Switch heading colour">◐</button>
+      <button class="mini" data-act="addstaff" data-d="${di}" title="Add staff">+</button>
+      <button class="mini" data-act="deldept" data-d="${di}" title="Delete department">×</button></td><td colspan="${ds.length+CODES.length+1}"></td></tr>`;
+    dp.staff.forEach((p,si)=>{
+      h += `<tr><td class="c0"><div class="who"><div class="nm">
+        <input class="sn" data-k="sname" data-d="${di}" data-s="${si}" value="${esc(p.name)}">
+        <input class="note" data-k="snote" data-d="${di}" data-s="${si}" value="${esc(p.note)}" placeholder="Timing note"></div>
+        <button class="mini" data-act="delstaff" data-d="${di}" data-s="${si}" title="Remove staff">×</button></div></td>`;
+      ds.forEach(d=>{
+        const v = p.duty[d] || "";
+        const o = opts.replace(`value="${esc(v)}"`, `value="${esc(v)}" selected`);
+        h += `<td class="cell"><select class="d${v==="A"?" abs":""}" data-k="duty" data-d="${di}" data-s="${si}" data-date="${d}">${o}</select></td>`;
+      });
+      h += totCells(p,ds) + "</tr>";
+    });
+  });
+  h += "</tbody></table>";
+  wrap.innerHTML = h;
+  ptitle.textContent = st.title + " — " + attId() + " — " + fmt(ds[0]) + " to " + fmt(ds[ds.length-1]);
+  attIdEl.textContent=attId(); mon.value=+st.start.slice(5,7); yr.value=+st.start.slice(0,4); renderSaved();
+  start.value = st.start; days.value = st.days; title.value = st.title;
+  if(daily.classList.contains("show")) renderDaily();
+  if(sum.classList.contains("show")) renderSum();
+}
+
+/* ---------- summary ---------- */
+function counts(p, ds){
+  const c={P:0,O:0,C:0,CL:0,SL:0,A:0};
+  ds.forEach(d=>{ const v=p.duty[d]; if(v && c[v]!==undefined) c[v]++; });
+  c.worked = ds.length - c.A; // Absent days are deducted from the days in the period
+  return c;
+}
+function renderSum(){
+  const ds=dates();
+  let h='<table><tr><th>Employee</th><th>Department</th><th>Days in period</th>'+CODES.map(k=>`<th title="${CODE_HELP[k]}">${k}</th>`).join("")+'<th>Days worked</th></tr>';
+  st.depts.forEach(dp=>dp.staff.forEach(p=>{ const c=counts(p,ds);
+    h+=`<tr><td>${esc(p.name)}</td><td>${esc(dp.name)}</td><td>${ds.length}</td>${CODES.map(k=>`<td>${c[k]}</td>`).join("")}<td><b>${c.worked}</b></td></tr>`; }));
+  sum.innerHTML = h+"</table>";
+}
+
+/* ---------- events ---------- */
+const $ = id => document.getElementById(id);
+const start=$("start"), days=$("days"), title=$("title"), wrap=$("wrap"), sum=$("sum"), ptitle=$("ptitle");
+const attIdEl=$("attId"), mon=$("mon"), yr=$("yr"), saved=$("saved");
+mon.innerHTML=MON.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
+mon.addEventListener("change",()=>setMonth(+yr.value,+mon.value));
+yr.addEventListener("change",()=>setMonth(+yr.value,+mon.value));
+saved.addEventListener("change",()=>{ if(saved.value){ const [y,m]=saved.value.split("-"); setMonth(+y,+m); } });
+const cYellow=$("cYellow"), cBlue=$("cBlue"), cOff=$("cOff"), cGrid=$("cGrid");
+
+start.addEventListener("change",()=>{ if(start.value){ st.start=start.value; save(); render(); } });
+days.addEventListener("change",()=>{ st.days=Math.min(366,Math.max(1,parseInt(days.value)||31)); save(); render(); });
+title.addEventListener("input",()=>{ st.title=title.value; save(); ptitle.textContent=st.title; });
+$("prev").onclick=()=>{ st.start=addDays(st.start,-st.days); save(); render(); };
+$("next").onclick=()=>{ st.start=addDays(st.start, st.days); save(); render(); };
+[["cYellow","yellow"],["cBlue","blue"],["cOff","off"],["cGrid","grid"]].forEach(([id,k])=>{
+  $(id).addEventListener("input",e=>{ st.colors[k]=e.target.value; save(); applyColors(); });
+});
+$("addDept").onclick=()=>{ const n=prompt("Department name"); if(n){ st.depts.push({name:n,color:"yellow",staff:[]}); save(); render(); } };
+$("addShift").onclick=()=>{ const n=(prompt("New shift code")||"").trim(); if(n && !st.shifts.includes(n)){ st.shifts.push(n); save(); render(); } };
+$("toggleSum").onclick=()=>{ sum.classList.toggle("show"); if(sum.classList.contains("show")) renderSum(); };
+$("print").onclick=()=>window.print();
+
+wrap.addEventListener("change",e=>{
+  const t=e.target; if(t.dataset.k!=="duty") return;
+  const p=st.depts[t.dataset.d].staff[t.dataset.s];
+  if(t.value) p.duty[t.dataset.date]=t.value; else delete p.duty[t.dataset.date];
+  t.classList.toggle("abs", t.value==="A");
+  const tr=t.closest("tr"), c=counts(p,dates());
+  CODES.forEach(k=>{ tr.querySelector(`[data-t="${k}"]`).textContent=c[k]; });
+  tr.querySelector('[data-t="W"]').textContent=c.worked;
+  save(); renderSaved(); if(sum.classList.contains("show")) renderSum();
+});
+wrap.addEventListener("input",e=>{
+  const t=e.target, k=t.dataset.k;
+  if(k==="dname") st.depts[t.dataset.d].name=t.value;
+  else if(k==="sname") st.depts[t.dataset.d].staff[t.dataset.s].name=t.value;
+  else if(k==="snote") st.depts[t.dataset.d].staff[t.dataset.s].note=t.value;
+  else return;
+  save();
+});
+wrap.addEventListener("click",e=>{
+  const b=e.target.closest("button[data-act]"); if(!b) return;
+  const di=+b.dataset.d, si=+b.dataset.s, a=b.dataset.act;
+  if(a==="addstaff"){ st.depts[di].staff.push(S("New staff")); }
+  else if(a==="delstaff"){ if(!confirm("Remove "+st.depts[di].staff[si].name+"? Their attendance history in every month is removed too.")) return; st.depts[di].staff.splice(si,1); }
+  else if(a==="deldept"){ if(!confirm("Delete department "+st.depts[di].name+" and its staff?")) return; st.depts.splice(di,1); }
+  else if(a==="color"){ st.depts[di].color = st.depts[di].color==="blue"?"yellow":"blue"; }
+  save(); render();
+});
+
+/* ---------- Excel export ---------- */
+const argb = h => "FF"+h.replace("#","").toUpperCase();
+const serial = s => toD(s).getTime()/86400000 + 25569;
+
+async function exportXlsx(){
+  if(typeof ExcelJS==="undefined"){ alert("Excel library did not load. Check your internet connection and try again."); return; }
+  const ds=dates(), n=ds.length, C=st.colors;
+  const wb=new ExcelJS.Workbook();
+  const ws=wb.addWorksheet("Attendance",{views:[{state:"frozen",xSplit:1,ySplit:2}]});
+  const lastCol=ws.getColumn(1+n).letter;
+  const thin={style:"thin",color:{argb:argb(C.grid)}};
+  const border={top:thin,left:thin,bottom:thin,right:thin};
+  const blueFill={type:"pattern",pattern:"solid",fgColor:{argb:argb(C.blue)}};
+  const yellowFill={type:"pattern",pattern:"solid",fgColor:{argb:argb(C.yellow)}};
+
+  ws.getColumn(1).width=30;
+  for(let i=0;i<n;i++) ws.getColumn(2+i).width=11;
+  const NC=CODES.length+1, T=1+n+NC; // totals columns at the end
+  for(let k=0;k<NC;k++) ws.getColumn(2+n+k).width=k===NC-1?13:7;
+
+  // Row 1 dates (B1 is the start date: edit it and everything after updates), row 2 weekdays
+  ws.getCell(1,1).value=attId(); ws.getCell(2,1).value="Day";
+  ds.forEach((d,i)=>{
+    const col=2+i, L=ws.getColumn(col).letter, P=ws.getColumn(col-1).letter;
+    const dc=ws.getCell(1,col);
+    dc.value = i===0 ? toD(d) : {formula:`${P}1+1`, result:serial(d)};
+    dc.numFmt="d/m/yyyy";
+    ws.getCell(2,col).value={formula:`TEXT(${L}1,"dddd")`, result:wd(d)};
+  });
+  ws.getCell(1,2).note="Start date. Change this cell and all other dates and weekdays update.";
+  CODES.forEach((k,j)=>{ ws.getCell(1,2+n+j).value=k; });
+  ws.getCell(1,T).value="Days worked";
+  ws.getCell(1,2+n).note="P Present, O Weekly Off, C Comp Off, CL Casual Leave, SL Sick Leave, A Absent. Days worked = days in period minus A.";
+  [1,2].forEach(r=>{ for(let c=1;c<=T;c++){ const x=ws.getCell(r,c); x.fill=blueFill; x.border=border; x.font={bold:r===1,size:r===1?10:9}; x.alignment={horizontal:c===1?"left":"center",vertical:"middle"}; } });
+
+  // Shift codes sheet (used by the dropdowns; add codes in the empty rows)
+  const sc=wb.addWorksheet("Shift Codes");
+  sc.getColumn(1).width=22; sc.getCell(1,1).value="Attendance codes (add new ones below)"; sc.getCell(1,1).font={bold:true};
+  st.shifts.forEach((s,i)=>sc.getCell(2+i,1).value=s);
+  const listRef="'Shift Codes'!$A$2:$A$40";
+
+  let r=3; const people=[];
+  st.depts.forEach(dp=>{
+    const hr=ws.getRow(r);
+    for(let c=1;c<=T;c++){ const x=ws.getCell(r,c); x.fill=dp.color==="blue"?blueFill:yellowFill; x.border=border; }
+    ws.getCell(r,1).value=dp.name; ws.getCell(r,1).font={bold:true}; hr.height=20; r++;
+    dp.staff.forEach(p=>{
+      const a=ws.getCell(r,1);
+      a.value = p.note ? {richText:[{text:p.name,font:{bold:true}},{text:"\n"+p.note,font:{size:8,color:{argb:"FF52525B"}}}]} : p.name;
+      a.alignment={wrapText:true,vertical:"middle"}; a.border=border;
+      ws.getRow(r).height = p.note ? 30 : 20;
+      ds.forEach((d,i)=>{
+        const x=ws.getCell(r,2+i); const v=p.duty[d]||null;
+        x.value=v; x.border=border; x.alignment={horizontal:"center",vertical:"middle"};
+        x.font={size:9,color:{argb:v==="A"?argb(C.off):"FF000000"},bold:v==="A"};
+        x.dataValidation={type:"list",allowBlank:true,formulae:[listRef]};
+      });
+      const rr=`$B${r}:$${lastCol}${r}`, cn=counts(p,ds);
+      CODES.forEach((k,j)=>{
+        const x=ws.getCell(r,2+n+j); x.value={formula:`COUNTIF(${rr},"${k}")`,result:cn[k]};
+        x.border=border; x.alignment={horizontal:"center",vertical:"middle"}; x.font={size:9};
+      });
+      const wcell=ws.getCell(r,T), AL=ws.getColumn(2+n+CODES.indexOf("A")).letter;
+      wcell.value={formula:`COLUMNS(${rr})-${AL}${r}`,result:cn.worked};
+      wcell.border=border; wcell.alignment={horizontal:"center",vertical:"middle"}; wcell.font={bold:true};
+      wcell.fill=yellowFill;
+      people.push({p,dept:dp.name,row:r}); r++;
+    });
+  });
+  const lastRow=r-1;
+  if(lastRow>=3){
+    ws.addConditionalFormatting({ref:`B3:${lastCol}${lastRow}`,rules:[
+      {type:"cellIs",operator:"equal",formulae:['"A"'],style:{font:{color:{argb:argb(C.off)},bold:true}}}
+    ]});
+  }
+  ws.pageSetup={orientation:"landscape",fitToPage:true,fitToWidth:1,fitToHeight:0,horizontalCentered:true,
+    margins:{left:0.3,right:0.3,top:0.6,bottom:0.5,header:0.25,footer:0.25},
+    printTitlesRow:"1:2",printTitlesColumn:"A:A"};
+  ws.headerFooter.oddHeader=`&C&B${st.title} — ${attId()} — ${fmt(ds[0])} to ${fmt(ds[n-1])}`;
+
+  // Monthly Summary (formulas linked to the roster)
+  const ms=wb.addWorksheet("Monthly Summary",{views:[{state:"frozen",ySplit:1}]});
+  const heads=["Employee","Department","Days in period",...CODES,"Days worked"];
+  heads.forEach((t,i)=>{ const x=ms.getCell(1,1+i); x.value=t; x.font={bold:true}; x.fill=blueFill; x.border=border; x.alignment={horizontal:"center"}; ms.getColumn(1+i).width=i<2?26:15; });
+  people.forEach((o,i)=>{
+    const R=2+i, rg=`'Attendance'!$B$${o.row}:$${lastCol}$${o.row}`, c=counts(o.p,ds);
+    ms.getCell(R,1).value=o.p.name; ms.getCell(R,2).value=o.dept;
+    ms.getCell(R,3).value={formula:`COLUMNS(${rg})`,result:ds.length};
+    CODES.forEach((k,m)=>{ ms.getCell(R,4+m).value={formula:`COUNTIF(${rg},"${k}")`,result:c[k]}; });
+    ms.getCell(R,10).value={formula:`C${R}-I${R}`,result:c.worked};
+    ms.getCell(R,10).font={bold:true};
+    for(let k=1;k<=10;k++){ const x=ms.getCell(R,k); x.border=border; if(k>2) x.alignment={horizontal:"center"}; }
+  });
+
+  const dl=wb.addWorksheet("Daily Saved");
+  ["Date","Day","Saved at","Entries marked"].forEach((t,i)=>{ const x=dl.getCell(1,1+i); x.value=t; x.font={bold:true}; x.fill=blueFill; x.border=border; dl.getColumn(1+i).width=i===2?24:16; });
+  let dr=2;
+  ds.forEach(d=>{ const rec=st.daily[d]; if(!rec) return;
+    dl.getCell(dr,1).value=fmt(d); dl.getCell(dr,2).value=wd(d); dl.getCell(dr,3).value=new Date(rec.savedAt).toLocaleString(); dl.getCell(dr,4).value=rec.entries;
+    for(let k=1;k<=4;k++) dl.getCell(dr,k).border=border; dr++; });
+
+  const buf=await wb.xlsx.writeBuffer();
+  const blob=new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="Attendance_"+attId()+".xlsx"; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+$("xlsx").onclick=()=>exportXlsx().catch(err=>alert("Export failed: "+err.message));
+
+/* ---------- daily attendance ---------- */
+const daily=$("daily"), dDate=$("dDate"), dList=$("dList"), dStat=$("dStat");
+const todayIso=()=>{ const t=new Date(); return t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0"); };
+function renderDaily(){
+  const d=dDate.value||todayIso(); dDate.value=d;
+  const opts='<option value=""></option>'+CODES.map(c=>`<option value="${c}">${c} – ${CODE_HELP[c]}</option>`).join("");
+  let h="";
+  st.depts.forEach((dp,di)=>{
+    if(!dp.staff.length) return;
+    h+=`<div class="dh ${dp.color==="blue"?"blue":"yellow"}">${esc(dp.name)}</div>`;
+    dp.staff.forEach((p,si)=>{
+      const v=p.duty[d]||"";
+      h+=`<div class="dr"><span>${esc(p.name)}${p.note?`<small>${esc(p.note)}</small>`:""}</span>
+        <select data-d="${di}" data-s="${si}" class="${v==="A"?"abs":""}">${opts.replace(`value="${v}"`,`value="${v}" selected`)}</select></div>`;
+    });
+  });
+  dList.innerHTML=h||"<p>No staff added yet.</p>";
+  const rec=st.daily[d];
+  if(rec){ dStat.className="ok"; dStat.textContent="Saved "+new Date(rec.savedAt).toLocaleString()+" · "+rec.entries+" marked"; }
+  else { dStat.className="no"; dStat.textContent="Not saved yet for "+fmt(d); }
+}
+$("dailyBtn").onclick=()=>{ daily.classList.toggle("show"); if(daily.classList.contains("show")){ if(!dDate.value) dDate.value=todayIso(); renderDaily(); } };
+dDate.addEventListener("change",renderDaily);
+dList.addEventListener("change",e=>{ if(e.target.tagName==="SELECT") e.target.classList.toggle("abs",e.target.value==="A"); });
+$("dAllP").onclick=()=>{ dList.querySelectorAll("select").forEach(x=>{ if(!x.value) x.value="P"; }); };
+$("dSave").onclick=()=>{
+  const d=dDate.value||todayIso(), sels=[...dList.querySelectorAll("select")];
+  const blank=sels.filter(x=>!x.value).length;
+  if(blank && !confirm(blank+" staff are not marked. Save anyway?")) return;
+  let n=0;
+  sels.forEach(x=>{
+    const p=st.depts[x.dataset.d].staff[x.dataset.s];
+    if(x.value){ p.duty[d]=x.value; n++; } else delete p.duty[d];
+  });
+  st.daily[d]={savedAt:new Date().toISOString(),entries:n};
+  if(d.slice(0,7)!==st.start.slice(0,7)){ const [y,m]=d.split("-"); setMonth(+y,+m); } else { save(); render(); }
+  renderDaily();
+};
+
+/* ---------- backup / restore ---------- */
+$("backup").onclick=()=>{
+  const blob=new Blob([JSON.stringify(st,null,1)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  const t=new Date(), z=n=>String(n).padStart(2,"0");
+  a.download="Attendance_Backup_"+t.getFullYear()+z(t.getMonth()+1)+z(t.getDate())+".json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+};
+$("restore").onclick=()=>{ const f=$("restoreFile"); f.value=""; f.click(); };
+$("restoreFile").addEventListener("change",e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const o=JSON.parse(r.result);
+      if(!o || !Array.isArray(o.depts)) throw new Error("This is not an attendance backup file.");
+      if(!confirm("Restore this backup? It replaces everything currently on this device.")) return;
+      const d=defaults();
+      o.daily=o.daily||{}; o.v=2; o.shifts=Array.isArray(o.shifts)&&o.shifts.length?o.shifts:d.shifts;
+      o.colors=Object.assign({},d.colors,o.colors||{});
+      o.start=o.start||d.start; o.days=o.days||d.days; o.title=o.title||d.title;
+      o.depts.forEach(x=>{ x.staff=x.staff||[]; x.staff.forEach(p=>{ p.duty=p.duty||{}; p.note=p.note||""; }); });
+      st=o; save(); applyColors(); render();
+      alert("Backup restored.");
+    }catch(err){ alert("Restore failed: "+err.message); }
+  };
+  r.readAsText(f);
+});
+
+applyColors(); render();
+</script>
+
+</body>
+</html>
